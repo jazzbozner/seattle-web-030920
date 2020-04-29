@@ -1,150 +1,156 @@
-// {
-//     "id": 1,
-//     "likes": 4,
-//     "name": "Norma",
-//     "breed": "Italian Greyhound",
-//     "image": "https://3.bp.blogspot.com/-uCd3eT8_AgA/XCZ-qnZIbXI/AAAAAAAATgQ/G8t6mwyZeIwb9OtUd2tEuasstpXsJgWlQCLcBGAs/s1600/IMG_3613l.JPG",
-//     "comments": [
-//       "God's perfect idiot",
-//       "Everyone loves her",
-//       "I'm literally going to steal this dog"
-//     ]
-//   }
-
-// structure for doggos
-
-{/* <div id='1'>
-            <h2>Norma</h2>
-            <p>Italian Greyhound</p>
-            <img src='https://3.bp.blogspot.com/-uCd3eT8_AgA/XCZ-qnZIbXI/AAAAAAAATgQ/G8t6mwyZeIwb9OtUd2tEuasstpXsJgWlQCLcBGAs/s1600/IMG_3613l.JPG'></img>
-            <p>Likes: 15</p>
-            <p>Comments:</p>
-            <ul>
-                <li>God's perfect idiot</li>
-                <li>Everyone loves her</li>
-                <li>I'm literally going to steal this dog</li>
-            </ul>
-            <form>
-                <label>Add Comment:</label>
-                <input placeholder='text here' type='text' name='comment'></input>
-                <input type='submit'></input>
-            </form>
-        </div> */}
-
-const DOGSURL = "http://localhost:3000/dogs"
+const DOG_URL = `http://localhost:3000/dogs`
 const main = document.querySelector('main')
-const dogForm = document.getElementById('new-dog')
-dogForm.addEventListener('submit', newDog)
+const newDogForm = document.getElementById('new-dog')
 
-function fetchDogs(){
-    fetch(DOGSURL)
-    .then(results=> results.json())
-    .then(results=>{
-        results.forEach(dog=>buildDogCard(dog))
+document.addEventListener('DOMContentLoaded', () => {
+
+fetchDogs(); //initalize method chain
+addDog(); //creates new dog
+
+})
+
+function addDog() {
+    newDogForm.addEventListener('submit', handleNewDog)
+}
+
+//  creates elements for dog card
+function makeDogCard(dog) {
+    const div = document.createElement('div')
+    const h2 = document.createElement('h2')
+    const dogName = document.createElement('p')
+    const img = document.createElement('img')
+    const like_count = document.createElement('p')
+    const likeBtn = document.createElement('button')
+    const SuprlikeBtn = document.createElement('button')
+    const ul = document.createElement('ul')
+    const form = document.createElement('form')
+    const deleteBtn = document.createElement('button')
+
+    div.id = dog.id
+    h2.innerText = dog.breed
+    dogName.innerText = dog.name
+    img.src = dog.image
+    like_count.innerText = `Likes: ${dog.likes}`
+    likeBtn.innerText = '<3'
+    SuprlikeBtn.innerText = 'XD'
+    ul.id = 'comments_list'
+    ul.innerText = 'Comments:'
+    form.innerHTML = `
+        <form>
+        <label>Add Comment:</label>
+        <input placeholder='text here' type='text' name='comment'></input>
+        <input type='submit'></input>
+        </form>
+        `
+    deleteBtn.innerText = "Hate this dog.."
+    // function add comments to dog
+    addComments(dog, ul)
+
+    // event listen for submit comment
+    form.addEventListener('submit', () => handleComment(dog))
+    likeBtn.addEventListener('click', () => handleLike(dog, like_count, 1))
+    SuprlikeBtn.addEventListener('click', () => handleLike(dog, like_count, 10))
+    deleteBtn.addEventListener('click', () => handleDelete(dog, div))
+
+    // stacks all elements
+    div.append(h2, dogName, img, like_count, likeBtn, SuprlikeBtn, ul, form, deleteBtn)
+    main.appendChild(div)
+}
+
+// addes comments to dog card
+function addComments(dog, ul) {
+    dog.comments.forEach(comment => {
+        const li = document.createElement('li')
+        li.innerText = comment
+        ul.appendChild(li)
     })
 }
 
-function buildDogCard(dog){
-    // what if we just check if this already exists
-    // let newDiv = document.getElementById(dog.id)
-    // if(newDiv){
-
-    // }
-    // debugger;
-    console.log(dog)
-    let newDiv = document.createElement('div')
-    newDiv.id = dog.id
-    newDiv.innerHTML = 
-    `<h2>${dog.name}</h2>
-    <p>${dog.breed}</p>
-    <img src='${dog.image}' id='dog-pic'></img>
-    <p id='dog-likes' style='cursor: pointer'>Likes: ${dog.likes}</p>
-    <p>Comments:</p>`
-    let ul = document.createElement('ul')
-    newDiv.appendChild(ul)
-    let p = newDiv.querySelector('#dog-likes')
-    p.addEventListener('click', ()=>handleLikes(dog, p, 1))
-
-    let pic = newDiv.querySelector('#dog-pic')
-    pic.addEventListener('click', ()=>handleLikes(dog, p, 10))
-    if(dog.comments){
-        dog.comments.forEach(comment=>{
-            let li = document.createElement('li')
-            li.innerText = comment
-            ul.appendChild(li)
-        })
-    }
-
-    let form = document.createElement('form')
-    form.innerHTML = 
-        `<label>Add Comment:</label>
-        <input placeholder='text here' type='text' name='comment'></input>
-        <input type='submit'></input>
-        `
-
-    form.addEventListener('submit', ()=> handleSubmit(dog))
-    newDiv.appendChild(form)
-
-    main.append(newDiv)
+// event handlers
+function handleLike(dog, like_count, amount) {
+    like_count.innerText = `Likes: ${dog.likes += amount}`
+    patchLikes(dog);
 }
 
-function handleSubmit(dog){
-    event.preventDefault()
+function handleComment(dog) {
+    event.preventDefault();
     dog.comments.push(event.target.comment.value)
-    // optimistic rendering
-    let newLi = document.createElement('li')
-    newLi.innerText = event.target.comment.value
-
-    let dogDiv = document.getElementById(dog.id)
-    dogDiv.querySelector(`ul`).appendChild(newLi)
-    // then we send it to a fetch
-    patchDog(dog)
+    patchComment(dog)
 }
 
-function handleLikes(dog, p, amount){
-    dog.likes += amount
-    p.innerText = `Likes: ${dog.likes}`
-    patchDog(dog)
+function handleNewDog() {
+    event.preventDefault();
+    dog = {
+        likes: 0, 
+        name: event.target.name.value, 
+        breed: event.target.breed.value, 
+        image: event.target.image.value,
+        comments: []
+    }
+    postDog(dog);
 }
 
-function patchDog(dog){
-    fetch(`${DOGSURL}/${dog.id}`, {
-        method: 'PATCH',
+function handleDelete(dog, div) {
+    deleteDog(dog)
+    alert('WOW! rude...')
+    div.remove()
+}
+
+// fetches
+function postDog(dog) {
+    fetch(DOG_URL, {
+        method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type':'application/json',
             Accepts: 'application/json'
         },
         body: JSON.stringify(dog)
     })
-    // .then(res=> res.json())
-    // .then(dog=>{
-    //     updateDomComments(dog)
-    //     // no
-    // })
-    // .catch((error) => {
-    //     console.error('Error:', error);
-    // })
+    .then(resp=>resp.json())
+    .then(dog=>makeDogCard(dog))
 }
 
-function newDog(){
+function fetchDogs() {
+    fetch(DOG_URL)
+    .then(resp=>resp.json())
+    .then(dogs => {
+        dogs.forEach(dog=>makeDogCard(dog))
+    })
+}
+
+function patchComment(dog) {
     event.preventDefault()
-    let data = {name:event.target.name.value, image:event.target.image.value, breed:event.target.breed.value, likes: 1000000, comments: []}
-    fetch(DOGSURL, {
-        method: 'POST',
+    fetch(`${DOG_URL}/${dog.id}`, {
+        method: 'PATCH',
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type':'application/json',
             Accepts: 'application/json'
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(dog)
     })
-    .then(res=>res.json())
-    .then(json=> buildDogCard(json))
+    .then(resp=>resp.json())
+    .then(dog=> {
+        const div = document.getElementById(dog.id)
+        const ul = div.querySelector('#comments_list')
+        const li = document.createElement('li')
+        let last = dog.comments.length-1
+        li.innerText = dog.comments[last]
+        // li.innerText = dog.comments.all.last Look up JS array selector
+        ul.appendChild(li)
+    })
 }
 
-// function updateDomComments(dog){
-//     let dogDiv = document.getElementById(dog.id)
-//     // can get all dogs from this
-//     dogDiv.querySelector(`ul`)
-// }
+function patchLikes(dog, amount) {
+    fetch(`${DOG_URL}/${dog.id}`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type':'application/json',
+            Accepts: 'application/json'
+        },
+        body: JSON.stringify(dog)
+    })
+}
 
-fetchDogs()
+function deleteDog(dog) {
+    fetch(`${DOG_URL}/${dog.id}`, {method: 'DELETE'})
+}
